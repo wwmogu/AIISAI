@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Driving Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #1a1a2e, #16213e);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 1000px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 8px;
+            color: #4dccff;
+            text-shadow: 0 0 10px rgba(77, 204, 255, 0.5);
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+        }
+        
+        .game-wrapper {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 3px solid #4dccff;
+        }
+        
+        canvas {
+            background-color: #0d3b2a;
+            display: block;
+        }
+        
+        .game-ui {
+            background: rgba(30, 30, 50, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            width: 300px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid #4dccff;
+        }
+        
+        .stats {
+            margin-bottom: 25px;
+        }
+        
+        .stats h2, .controls h2 {
+            color: #4dccff;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            border-bottom: 1px solid #4dccff;
+            padding-bottom: 5px;
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        .controls {
+            margin-bottom: 25px;
+        }
+        
+        .key {
+            display: inline-block;
+            background: #222;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin: 5px;
+            border: 1px solid #555;
+            box-shadow: 0 3px 0 #111;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .key-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        
+        .instructions {
+            background: rgba(30, 30, 50, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 1000px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid #4dccff;
+        }
+        
+        .instructions h2 {
+            color: #4dccff;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .instructions p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        .color-option {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin: 0 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.selected {
+            border: 2px solid white;
+            transform: scale(1.1);
+        }
+        
+        .color-selector {
+            margin-top: 15px;
+        }
+        
+        .color-selector p {
+            margin-bottom: 10px;
+            color: #4dccff;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .game-over h2 {
+            font-size: 3rem;
+            color: #ff3333;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+        }
+        
+        .game-over p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: #ffcc00;
+        }
+        
+        .btn {
+            background: linear-gradient(to bottom, #4dccff, #2a8cd0);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(to bottom, #5ddcff, #3a9ce0);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .restart-btn {
+            background: linear-gradient(to bottom, #ffcc00, #e6b800);
+            margin-top: 10px;
+        }
+        
+        .restart-btn:hover {
+            background: linear-gradient(to bottom, #ffd633, #f0c600);
+        }
+        
+        @media (max-width: 900px) {
+            .game-area {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .game-ui {
+                width: 100%;
+                max-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>2D DRIVING GAME</h1>
+            <p class="subtitle">Drive your car around the track. Stay on the road to maintain speed!</p>
+        </div>
+        
+        <div class="game-area">
+            <div class="game-wrapper">
+                <canvas id="gameCanvas" width="600" height="600"></canvas>
+                <div class="game-over" id="gameOverScreen">
+                    <h2>GAME OVER</h2>
+                    <p id="gameOverMessage">You ran out of fuel!</p>
+                    <button class="btn restart-btn" id="restartBtn">RESTART GAME</button>
+                </div>
+            </div>
+            
+            <div class="game-ui">
+                <div class="stats">
+                    <h2>GAME STATS</h2>
+                    <div class="stat">
+                        <span>Speed:</span>
+                        <span class="stat-value" id="speedValue">0 km/h</span>
+                    </div>
+                    <div class="stat">
+                        <span>Fuel:</span>
+                        <span class="stat-value" id="fuelValue">100%</span>
+                    </div>
+                    <div class="stat">
+                        <span>Distance:</span>
+                        <span class="stat-value" id="distanceValue">0 m</span>
+                    </div>
+                    <div class="stat">
+                        <span>Time:</span>
+                        <span class="stat-value" id="timeValue">0 s</span>
+                    </div>
+                    <div class="stat">
+                        <span>Off-road:</span>
+                        <span class="stat-value" id="offroadValue">No</span>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <h2>CONTROLS</h2>
+                    <div class="key-row">
+                        <div class="key">↑</div>
+                    </div>
+                    <div class="key-row">
+                        <div class="key">←</div>
+                        <div class="key">↓</div>
+                        <div class="key">→</div>
+                    </div>
+                    <p style="margin-top: 15px; text-align: center;">↑ Accelerate, ↓ Brake, ← → Steer</p>
+                </div>
+                
+                <div class="color-selector">
+                    <p>CAR COLOR:</p>
+                    <div>
+                        <div class="color-option selected" id="colorRed" style="background-color: #ff3333;"></div>
+                        <div class="color-option" id="colorBlue" style="background-color: #4dccff;"></div>
+                        <div class="color-option" id="colorGreen" style="background-color: #33cc33;"></div>
+                        <div class="color-option" id="colorYellow" style="background-color: #ffcc00;"></div>
+                        <div class="color-option" id="colorPurple" style="background-color: #cc66ff;"></div>
+                    </div>
+                </div>
+                
+                <button class="btn" id="resetBtn" style="margin-top: 20px; width: 100%;">RESET CAR POSITION</button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2>HOW TO PLAY</h2>
+            <p>Drive your car around the track using the arrow keys. Try to stay on the road to maintain your speed and fuel efficiency!</p>
+            <ul>
+                <li><strong>On-road driving:</strong> Normal speed and fuel consumption</li>
+                <li><strong>Off-road driving:</strong> Slower speed and increased fuel consumption</li>
+                <li><strong>Fuel:</strong> Refuels when you pass over fuel cans on the track</li>
+                <li><strong>Objective:</strong> Drive as far as possible without running out of fuel</li>
+            </ul>
+            <p>Game ends when fuel reaches 0%</p>
+        </div>
+    </div>
+
+    <script>
+        // Game elements
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const speedValue = document.getElementById('speedValue');
+        const fuelValue = document.getElementById('fuelValue');
+        const distanceValue = document.getElementById('distanceValue');
+        const timeValue = document.getElementById('timeValue');
+        const offroadValue = document.getElementById('offroadValue');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        const restartBtn = document.getElementById('restartBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        // Color selector
+        const colorOptions = document.querySelectorAll('.color-option');
+        let carColor = '#ff3333'; // Default red
+        
+        // Game variables
+        let car = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            width: 40,
+            height: 70,
+            speed: 0,
+            maxSpeed: 8,
+            acceleration: 0.2,
+            deceleration: 0.1,
+            turnSpeed: 0.05,
+            angle: 0, // In radians
+            fuel: 100,
+            distance: 0,
+            offRoad: false
+        };
+        
+        let gameTime = 0;
+        let gameRunning = true;
+        let keys = {};
+        let lastTimestamp = 0;
+        
+        // Track definition (circular track)
+        const track = {
+            innerRadius: 150,
+            outerRadius: 300,
+            centerX: canvas.width / 2,
+            centerY: canvas.height / 2
+        };
+        
+        // Fuel cans positions
+        let fuelCans = [
+            {x: track.centerX + 200, y: track.centerY, collected: false},
+            {x: track.centerX - 200, y: track.centerY, collected: false},
+            {x: track.centerX, y: track.centerY + 200, collected: false},
+            {x: track.centerX, y: track.centerY - 200, collected: false},
+            {x: track.centerX + 140, y: track.centerY + 140, collected: false},
+            {x: track.centerX - 140, y: track.centerY - 140, collected: false}
+        ];
+        
+        // Event listeners for keyboard controls
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            // Prevent arrow keys from scrolling the page
+            if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Color selection
+        colorOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove selected class from all options
+                colorOptions.forEach(opt => opt.classList.remove('selected'));
+                // Add selected class to clicked option
+                option.classList.add('selected');
+                // Update car color
+                carColor = option.style.backgroundColor;
+            });
+        });
+        
+        // Reset button
+        resetBtn.addEventListener('click', () => {
+            car.x = canvas.width / 2;
+            car.y = canvas.height / 2;
+            car.speed = 0;
+            car.angle = 0;
+        });
+        
+        // Restart button
+        restartBtn.addEventListener('click', () => {
+            resetGame();
+        });
+        
+        // Reset game function
+        function resetGame() {
+            car = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                width: 40,
+                height: 70,
+                speed: 0,
+                maxSpeed: 8,
+                acceleration: 0.2,
+                deceleration: 0.1,
+                turnSpeed: 0.05,
+                angle: 0,
+                fuel: 100,
+                distance: 0,
+                offRoad: false
+            };
+            
+            gameTime = 0;
+            gameRunning = true;
+            keys = {};
+            
+            // Reset fuel cans
+            fuelCans.forEach(can => {
+                can.collected = false;
+            });
+            
+            gameOverScreen.style.display = 'none';
+        }
+        
+        // Check if a point is on the track
+        function isOnTrack(x, y) {
+            const dx = x - track.centerX;
+            const dy = y - track.centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            return distance >= track.innerRadius && distance <= track.outerRadius;
+        }
+        
+        // Draw the track
+        function drawTrack() {
+            // Draw grass background
+            ctx.fillStyle = '#0d3b2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw outer track boundary
+            ctx.beginPath();
+            ctx.arc(track.centerX, track.centerY, track.outerRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#333';
+            ctx.fill();
+            
+            // Draw inner track boundary (grass)
+            ctx.beginPath();
+            ctx.arc(track.centerX, track.centerY, track.innerRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#0d3b2a';
+            ctx.fill();
+            
+            // Draw road surface
+            ctx.beginPath();
+            ctx.arc(track.centerX, track.centerY, track.outerRadius - 10, 0, Math.PI * 2);
+            ctx.arc(track.centerX, track.centerY, track.innerRadius + 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#555';
+            ctx.fill('evenodd');
+            
+            // Draw track markings
+            ctx.beginPath();
+            ctx.arc(track.centerX, track.centerY, (track.innerRadius + track.outerRadius) / 2, 0, Math.PI * 2);
+            ctx.setLineDash([20, 15]);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        // Draw the car
+        function drawCar() {
+            ctx.save();
+            ctx.translate(car.x, car.y);
+            ctx.rotate(car.angle);
+            
+            // Car body
+            ctx.fillStyle = carColor;
+            ctx.fillRect(-car.width/2, -car.height/2, car.width, car.height);
+            
+            // Car details
+            ctx.fillStyle = '#222';
+            // Windows
+            ctx.fillRect(-car.width/2 + 5, -car.height/2 + 5, car.width - 10, 15);
+            ctx.fillRect(-car.width/2 + 5, car.height/2 - 25, car.width - 10, 15);
+            
+            // Headlights
+            ctx.fillStyle = '#ffffcc';
+            ctx.fillRect(-car.width/2 + 5, -car.height/2 + 2, 8, 5);
+            ctx.fillRect(car.width/2 - 13, -car.height/2 + 2, 8, 5);
+            
+            // Taillights
+            ctx.fillStyle = '#ff3333';
+            ctx.fillRect(-car.width/2 + 5, car.height/2 - 7, 8, 5);
+            ctx.fillRect(car.width/2 - 13, car.height/2 - 7, 8, 5);
+            
+            // Wheels
+            ctx.fillStyle = '#111';
+            ctx.fillRect(-car.width/2 - 5, -car.height/2 + 10, 5, 15);
+            ctx.fillRect(car.width/2, -car.height/2 + 10, 5, 15);
+            ctx.fillRect(-car.width/2 - 5, car.height/2 - 25, 5, 15);
+            ctx.fillRect(car.width/2, car.height/2 - 25, 5, 15);
+            
+            ctx.restore();
+        }
+        
+        // Draw fuel cans
+        function drawFuelCans() {
+            fuelCans.forEach(can => {
+                if (!can.collected) {
+                    ctx.fillStyle = '#ffcc00';
+                    ctx.beginPath();
+                    ctx.arc(can.x, can.y, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw fuel symbol
+                    ctx.fillStyle = '#996600';
+                    ctx.beginPath();
+                    ctx.moveTo(can.x, can.y - 8);
+                    ctx.lineTo(can.x - 5, can.y + 2);
+                    ctx.lineTo(can.x + 5, can.y + 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Draw highlight
+                    ctx.fillStyle = '#ffdd44';
+                    ctx.beginPath();
+                    ctx.arc(can.x - 3, can.y - 3, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+        
+        // Check collision with fuel cans
+        function checkFuelCollision() {
+            fuelCans.forEach(can => {
+                if (!can.collected) {
+                    const dx = car.x - can.x;
+                    const dy = car.y - can.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 25) {
+                        can.collected = true;
+                        car.fuel = Math.min(100, car.fuel + 25);
+                    }
+                }
+            });
+        }
+        
+        // Update game stats
+        function updateStats() {
+            speedValue.textContent = `${Math.abs(Math.round(car.speed * 20))} km/h`;
+            fuelValue.textContent = `${Math.round(car.fuel)}%`;
+            distanceValue.textContent = `${Math.round(car.distance)} m`;
+            timeValue.textContent = `${Math.round(gameTime)} s`;
+            offroadValue.textContent = car.offRoad ? 'Yes' : 'No';
+            offroadValue.style.color = car.offRoad ? '#ff3333' : '#ffcc00';
+        }
+        
+        // Game over function
+        function gameOver() {
+            gameRunning = false;
+            gameOverMessage.textContent = `You drove ${Math.round(car.distance)} meters in ${Math.round(gameTime)} seconds!`;
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // Game loop
+        function gameLoop(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const deltaTime = (timestamp - lastTimestamp) / 16; // Normalize to ~60fps
+            lastTimestamp = timestamp;
+            
+            if (gameRunning) {
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw track
+                drawTrack();
+                
+                // Draw fuel cans
+                drawFuelCans();
+                
+                // Handle car controls
+                if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+                    car.speed = Math.min(car.speed + car.acceleration, car.maxSpeed);
+                } else if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+                    car.speed = Math.max(car.speed - car.acceleration, -car.maxSpeed/2);
+                } else {
+                    // Gradually slow down if no acceleration key is pressed
+                    if (car.speed > 0) {
+                        car.speed = Math.max(car.speed - car.deceleration, 0);
+                    } else if (car.speed < 0) {
+                        car.speed = Math.min(car.speed + car.deceleration, 0);
+                    }
+                }
+                
+                // Handle steering
+                if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                    car.angle -= car.turnSpeed * (car.speed !== 0 ? 1 : 0.5);
+                }
+                if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                    car.angle += car.turnSpeed * (car.speed !== 0 ? 1 : 0.5);
+                }
+                
+                // Update car position based on speed and angle
+                car.x += Math.sin(car.angle) * car.speed;
+                car.y -= Math.cos(car.angle) * car.speed;
+                
+                // Keep car within canvas bounds
+                car.x = Math.max(car.width/2, Math.min(canvas.width - car.width/2, car.x));
+                car.y = Math.max(car.height/2, Math.min(canvas.height - car.height/2, car.y));
+                
+                // Check if car is on track
+                car.offRoad = !isOnTrack(car.x, car.y);
+                
+                // Update distance
+                if (Math.abs(car.speed) > 0.1) {
+                    car.distance += Math.abs(car.speed) * 0.5;
+                }
+                
+                // Update game time
+                gameTime += deltaTime / 60;
+                
+                // Update fuel based on speed and whether off-road
+                let fuelConsumption = Math.abs(car.speed) * 0.02;
+                if (car.offRoad) {
+                    fuelConsumption *= 2; // Double fuel consumption off-road
+                }
+                
+                car.fuel = Math.max(0, car.fuel - fuelConsumption);
+                
+                // Check for game over condition
+                if (car.fuel <= 0) {
+                    car.fuel = 0;
+                    car.speed = 0;
+                    gameOver();
+                }
+                
+                // Check collision with fuel cans
+                checkFuelCollision();
+                
+                // Draw car
+                drawCar();
+                
+                // Update stats display
+                updateStats();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start the game
+        requestAnimationFrame(gameLoop);
+        
+        // Draw initial state
+        drawTrack();
+        drawFuelCans();
+        drawCar();
+        updateStats();
+    </script>
+</body>
+</html>

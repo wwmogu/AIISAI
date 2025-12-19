@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>2D Car Driving Game</title>
+<style>
+  body { margin:0; background:#222; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; }
+  #game-container {
+    position:relative;
+    width:800px; height:600px;
+    border:4px solid #444;
+    background:#0a3d0a; /* green grass */
+    overflow:hidden;
+    box-shadow:0 0 20px rgba(0,0,0,0.8);
+  }
+  canvas { display:block; }
+  #ui {
+    position:absolute; top:10px; left:10px; color:white; background:rgba(0,0,0,0.6);
+    padding:10px; border-radius:8px; font-size:18px;
+  }
+  #instructions {
+    position:absolute; bottom:10px; left:10px; color:#fff; background:rgba(0,0,0,0.6);
+    padding:10px; border-radius:8px; font-size:14px;
+  }
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <div id="ui">Speed: <span id="speed">0</span> km/h</div>
+  <div id="instructions">
+    ← → = Steer<br>
+    ↑ = Accelerate<br>
+    ↓ = Brake/Reverse<br>
+    Space = Handbrake (drift)
+  </div>
+</div>
+
+<script>
+// Get canvas
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const speedDisplay = document.getElementById('speed');
+
+// Car properties
+const car = {
+  x: 400,
+  y: 500,
+  width: 40,
+  height: 70,
+  angle: 0,
+  speed: 0,
+  maxSpeed: 6,
+  acceleration: 0.2,
+  deceleration: 0.1,
+  turnSpeed: 0.05,
+  drift: false
+};
+
+// Controls
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keyup', e => keys[e.key] = false);
+
+// Road markings (simple dashed lines)
+const roadLines = [
+  {x: 200, y: -600, length: 100},
+  {x: 600, y: -600, length: 100}
+];
+
+// Game loop
+function update() {
+  // Acceleration & braking
+  if (keys['ArrowUp'] || keys['w']) {
+    car.speed = Math.min(car.speed + car.acceleration, car.maxSpeed);
+  } else if (keys['ArrowDown'] || keys['s']) {
+    car.speed = Math.max(car.speed - car.acceleration, -car.maxSpeed / 2);
+  } else {
+    // Natural deceleration
+    if (car.speed > 0) car.speed -= car.deceleration;
+    else if (car.speed < 0) car.speed += car.deceleration;
+  }
+
+  // Handbrake (drift)
+  car.drift = keys[' '];
+
+  // Turning
+  if (car.speed !== 0) {
+    const turn = car.drift ? car.turnSpeed * 1.8 : car.turnSpeed;
+    if (keys['ArrowLeft'] || keys['a']) car.angle -= turn * Math.abs(car.speed)/car.maxSpeed;
+    if (keys['ArrowRight'] || keys['d']) car.angle += turn * Math.abs(car.speed)/car.maxSpeed;
+  }
+
+  // Move car
+  const rad = car.angle;
+  car.x += Math.sin(rad) * car.speed;
+  car.y -= Math.cos(rad) * car.speed;
+
+  // Keep car inside screen
+  car.x = Math.max(20, Math.min(780, car.x));
+  car.y = Math.max(20, Math.min(580, car.y));
+
+  // Update speed display
+  speedDisplay.textContent = Math.abs(Math.round(car.speed * 10));
+
+  draw();
+  requestAnimationFrame(update);
+}
+
+function draw() {
+  // Clear canvas
+  ctx.fillStyle = '#0a3d0a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw road
+  ctx.fillStyle = '#333';
+  ctx.fillRect(150, 0, 500, canvas.height);
+  
+  // Draw road lines
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 8;
+  ctx.setLineDash([40, 40]);
+  roadLines.forEach(line => {
+    ctx.beginPath();
+    ctx.moveTo(line.x, line.y);
+    ctx.lineTo(line.x, line.y + canvas.height + 200);
+    ctx.stroke();
+    line.y += Math.abs(car.speed) * 0.8; // scroll faster with speed
+    if (line.y > canvas.height + 100) line.y = -200;
+  });
+  ctx.setLineDash([]);
+
+  // Draw car
+  ctx.save();
+  ctx.translate(car.x, car.y);
+  ctx.rotate(car.angle);
+  
+  // Body
+  ctx.fillStyle = '#e63946';
+  ctx.fillRect(-car.width/2, -car.height/2, car.width, car.height);
+  
+  // Roof
+  ctx.fillStyle = '#1d3557';
+  ctx.fillRect(-car.width/2 + 5, -car.height/2 + 15, car.width - 10, 30);
+  
+  // Windows
+  ctx.fillStyle = '#a8dadc';
+  ctx.fillRect(-car.width/2 + 8, -car.height/2 + 18, car.width - 16, 22);
+  
+  // Wheels
+  ctx.fillStyle = '#000';
+  ctx.fillRect(-car.width/2 - 5, -car.height/2 + 10, 10, 20);
+  ctx.fillRect(car.width/2 - 5, -car.height/2 + 10, 10, 20);
+  ctx.fillRect(-car.width/2 - 5, car.height/2 - 30, 10, 20);
+  ctx.fillRect(car.width/2 - 5, car.height/2 - 30, 10, 20);
+  
+  ctx.restore();
+}
+
+// Start game
+update();
+</script>
+</body>
+</html>
