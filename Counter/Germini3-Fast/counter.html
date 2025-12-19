@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Click Master: World Challenge</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f0f2f5; padding: 50px; }
+        .game-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; }
+        #click-btn { font-size: 24px; padding: 20px 40px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 50px; transition: transform 0.1s; }
+        #click-btn:active { transform: scale(0.95); background: #0056b3; }
+        .score-display { font-size: 48px; margin: 20px 0; font-weight: bold; color: #333; }
+        .stats { margin-top: 20px; color: #666; }
+        .leaderboard { margin-top: 30px; text-align: left; display: inline-block; width: 100%; max-width: 300px; }
+        .record-hit { color: #28a745; font-weight: bold; display: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="game-card">
+        <h1>Click Master</h1>
+        <div class="score-display" id="counter">0</div>
+        <button id="click-btn">CLICK ME!</button>
+        
+        <div id="record-msg" class="record-hit">🎉 NEW GLOBAL RECORD RANKING! 🎉</div>
+
+        <div class="stats">
+            <p>Your Best: <span id="best-score">0</span></p>
+            <hr>
+            <h3>Global Top 10 Benchmarks</h3>
+            <ul id="leaderboard-list" class="leaderboard"></ul>
+        </div>
+    </div>
+
+    <script>
+        // Mock World Top 10 (CPS/Total benchmarks)
+        const globalTop10 = [1500, 1200, 1000, 950, 800, 750, 600, 500, 400, 300];
+        
+        let count = 0;
+        let personalBest = localStorage.getItem('personalBest') || 0;
+
+        const counterDisplay = document.getElementById('counter');
+        const bestDisplay = document.getElementById('best-score');
+        const clickBtn = document.getElementById('click-btn');
+        const recordMsg = document.getElementById('record-msg');
+
+        // Initial UI Load
+        bestDisplay.innerText = personalBest;
+        renderLeaderboard();
+
+        // 1. Click Handler
+        clickBtn.addEventListener('click', () => {
+            count++;
+            counterDisplay.innerText = count;
+            checkGlobalRanking(count);
+        });
+
+        // 2. Save Data on Exit/Refresh
+        window.addEventListener('beforeunload', () => {
+            if (count > personalBest) {
+                localStorage.setItem('personalBest', count);
+            }
+        });
+
+        function checkGlobalRanking(currentScore) {
+            // Check if user outperforms any of the top 10
+            const isTop10 = globalTop10.some(score => currentScore > score);
+            if (isTop10) {
+                recordMsg.style.display = 'block';
+            }
+        }
+
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = globalTop10.map((score, index) => 
+                `<li>Rank ${index + 1}: ${score} clicks</li>`
+            ).join('');
+        }
+    </script>
+</body>
+</html>

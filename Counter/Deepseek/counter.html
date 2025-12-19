@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Counter Challenge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-game {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .current-score {
+            font-size: 5rem;
+            font-weight: bold;
+            margin: 2rem 0;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.1s ease;
+        }
+
+        .click-button {
+            background: linear-gradient(45deg, #FF6B6B, #FFE66D);
+            border: none;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.1s ease;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .click-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .click-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .instructions h3 {
+            margin-bottom: 1rem;
+        }
+
+        .leaderboard {
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 1.5rem;
+            border-radius: 15px;
+        }
+
+        .leaderboard h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .current-highlight {
+            background-color: rgba(255, 230, 109, 0.3) !important;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .control-button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn {
+            background-color: #FF6B6B;
+            color: white;
+        }
+
+        .submit-btn {
+            background-color: #4ECDC4;
+            color: white;
+        }
+
+        .control-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        @keyframes pulse {
+            0% { background-color: rgba(255, 230, 109, 0.3); }
+            50% { background-color: rgba(255, 230, 109, 0.5); }
+            100% { background-color: rgba(255, 230, 109, 0.3); }
+        }
+
+        @keyframes scorePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 2rem;
+            background-color: #4ECDC4;
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+        }
+
+        .name-input {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 2rem;
+            border-radius: 15px;
+            z-index: 1001;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .name-input input {
+            width: 100%;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .name-input button {
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            background-color: #4ECDC4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .current-score {
+                font-size: 3rem;
+            }
+            
+            .click-button {
+                width: 150px;
+                height: 150px;
+                font-size: 1.5rem;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    
+    <div class="name-input" id="nameInput">
+        <h3>🎉 New High Score! 🎉</h3>
+        <p>Your score: <span id="newScoreDisplay">0</span></p>
+        <p>Enter your name:</p>
+        <input type="text" id="playerName" maxlength="20" placeholder="Your Name">
+        <button onclick="saveHighScore()">Save to Leaderboard</button>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>⚡ Click Counter Challenge ⚡</h1>
+            <p class="subtitle">How fast can you click? Test your speed and make the leaderboard!</p>
+        </header>
+        
+        <div class="instructions">
+            <h3>🎮 How to Play</h3>
+            <p>Click the button as many times as you can! Your score is automatically saved when you refresh or leave the page.</p>
+            <p>If you make it to the Top 10, you'll be asked to enter your name for the leaderboard!</p>
+        </div>
+        
+        <div class="main-game">
+            <div class="current-score" id="currentScore">0</div>
+            <button class="click-button" id="clickButton">CLICK ME!</button>
+            <p>Current Session: <span id="sessionClicks">0</span> clicks</p>
+        </div>
+        
+        <div class="leaderboard">
+            <h2>🏆 Top 10 Leaderboard 🏆</h2>
+            <table id="leaderboardTable">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Score</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <!-- Leaderboard will be populated here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="controls">
+            <button class="control-button reset-btn" onclick="resetCurrentSession()">Reset Current Session</button>
+            <button class="control-button submit-btn" onclick="endSession()">End Session & Save Score</button>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Your progress is saved automatically using browser storage. Scores persist even after closing the browser.</p>
+        <p>Leaderboard data is stored locally on your device.</p>
+    </div>
+
+    <script>
+        // Game state variables
+        let clickCount = 0;
+        let sessionClicks = 0;
+        let leaderboard = [];
+        let currentPlayerId = null;
+        
+        // DOM elements
+        const currentScoreEl = document.getElementById('currentScore');
+        const clickButtonEl = document.getElementById('clickButton');
+        const sessionClicksEl = document.getElementById('sessionClicks');
+        const leaderboardBodyEl = document.getElementById('leaderboardBody');
+        const notificationEl = document.getElementById('notification');
+        const nameInputEl = document.getElementById('nameInput');
+        const newScoreDisplayEl = document.getElementById('newScoreDisplay');
+        const playerNameInput = document.getElementById('playerName');
+        
+        // Initialize the game
+        function initGame() {
+            // Load saved data from localStorage
+            loadSavedData();
+            
+            // Set up click event listener for the main button
+            clickButtonEl.addEventListener('click', handleClick);
+            
+            // Set up beforeunload event to save score when leaving
+            window.addEventListener('beforeunload', saveCurrentScore);
+            
+            // Update display
+            updateDisplay();
+            updateLeaderboardDisplay();
+        }
+        
+        // Handle click event
+        function handleClick() {
+            clickCount++;
+            sessionClicks++;
+            
+            // Add visual feedback
+            currentScoreEl.style.animation = 'none';
+            setTimeout(() => {
+                currentScoreEl.style.animation = 'scorePop 0.3s ease';
+            }, 10);
+            
+            updateDisplay();
+        }
+        
+        // Update all displays
+        function updateDisplay() {
+            currentScoreEl.textContent = clickCount;
+            sessionClicksEl.textContent = sessionClicks;
+            
+            // Update button text with motivational messages
+            if (clickCount < 10) {
+                clickButtonEl.textContent = "CLICK ME!";
+            } else if (clickCount < 50) {
+                clickButtonEl.textContent = "KEEP GOING!";
+            } else if (clickCount < 100) {
+                clickButtonEl.textContent = "AWESOME!";
+            } else if (clickCount < 200) {
+                clickButtonEl.textContent = "LEGENDARY!";
+            } else {
+                clickButtonEl.textContent = "UNSTOPPABLE!";
+            }
+        }
+        
+        // Load saved data from localStorage
+        function loadSavedData() {
+            // Load total click count
+            const savedCount = localStorage.getItem('clickCounter_total');
+            if (savedCount) {
+                clickCount = parseInt(savedCount);
+            }
+            
+            // Load leaderboard
+            const savedLeaderboard = localStorage.getItem('clickCounter_leaderboard');
+            if (savedLeaderboard) {
+                leaderboard = JSON.parse(savedLeaderboard);
+            } else {
+                // Initialize with some example scores
+                leaderboard = [
+                    { id: Date.now() + 1, name: "Speed Demon", score: 348, date: "2025-11-15" },
+                    { id: Date.now() + 2, name: "Click Master", score: 287, date: "2025-11-20" },
+                    { id: Date.now() + 3, name: "Rapid Roy", score: 265, date: "2025-11-25" },
+                    { id: Date.now() + 4, name: "Swift Sam", score: 243, date: "2025-12-01" },
+                    { id: Date.now() + 5, name: "Fast Fiona", score: 221, date: "2025-12-05" },
+                    { id: Date.now() + 6, name: "Quick Quinn", score: 198, date: "2025-12-08" },
+                    { id: Date.now() + 7, name: "Speedy Gonzales", score: 176, date: "2025-12-10" },
+                    { id: Date.now() + 8, name: "Rapid Rita", score: 154, date: "2025-12-12" },
+                    { id: Date.now() + 9, name: "Lightning Leo", score: 132, date: "2025-12-14" },
+                    { id: Date.now() + 10, name: "Flash Fred", score: 110, date: "2025-12-16" }
+                ];
+                saveLeaderboard();
+            }
+            
+            // Generate a unique ID for this session
+            currentPlayerId = Date.now();
+        }
+        
+        // Save current score to localStorage
+        function saveCurrentScore() {
+            localStorage.setItem('clickCounter_total', clickCount.toString());
+            
+            // Check if score qualifies for leaderboard
+            const minLeaderboardScore = leaderboard.length > 0 ? 
+                Math.min(...leaderboard.map(entry => entry.score)) : 0;
+            
+            if (clickCount > minLeaderboardScore || leaderboard.length < 10) {
+                // Store pending high score
+                localStorage.setItem('clickCounter_pendingScore', clickCount.toString());
+                localStorage.setItem('clickCounter_pendingTime', new Date().toISOString());
+            }
+        }
+        
+        // Save leaderboard to localStorage[citation:2]
+        function saveLeaderboard() {
+            localStorage.setItem('clickCounter_leaderboard', JSON.stringify(leaderboard));
+        }
+        
+        // Update leaderboard display
+        function updateLeaderboardDisplay() {
+            leaderboardBodyEl.innerHTML = '';
+            
+            // Sort leaderboard by score (descending)
+            const sortedLeaderboard = [...leaderboard].sort((a, b) => b.score - a.score);
+            
+            // Display top 10
+            sortedLeaderboard.slice(0, 10).forEach((entry, index) => {
+                const row = document.createElement('tr');
+                
+                // Check if this is the current player's latest score
+                const isCurrentPlayer = entry.id === currentPlayerId;
+                if (isCurrentPlayer) {
+                    row.classList.add('current-highlight');
+                }
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.score}</td>
+                    <td>${entry.date}</td>
+                `;
+                
+                leaderboardBodyEl.appendChild(row);
+            });
+            
+            // Fill remaining rows if less than 10
+            for (let i = sortedLeaderboard.length; i < 10; i++) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td>-</td>
+                    <td>0</td>
+                    <td>-</td>
+                `;
+                leaderboardBodyEl.appendChild(row);
+            }
+        }
+        
+        // Show notification
+        function showNotification(message, duration = 3000) {
+            notificationEl.textContent = message;
+            notificationEl.style.display = 'block';
+            
+            setTimeout(() => {
+                notificationEl.style.display = 'none';
+            }, duration);
+        }
+        
+        // Check if current score qualifies for leaderboard
+        function checkLeaderboardQualification() {
+            if (clickCount === 0) return false;
+            
+            const minLeaderboardScore = leaderboard.length > 0 ? 
+                Math.min(...leaderboard.map(entry => entry.score)) : 0;
+            
+            return leaderboard.length < 10 || clickCount > minLeaderboardScore;
+        }
+        
+        // Show name input for high score
+        function showNameInput() {
+            newScoreDisplayEl.textContent = clickCount;
+            nameInputEl.style.display = 'block';
+            playerNameInput.focus();
+        }
+        
+        // Save high score to leaderboard
+        function saveHighScore() {
+            const playerName = playerNameInput.value.trim() || "Anonymous";
+            const today = new Date();
+            const dateString = today.toISOString().split('T')[0];
+            
+            // Add to leaderboard
+            leaderboard.push({
+                id: currentPlayerId,
+                name: playerName,
+                score: clickCount,
+                date: dateString
+            });
+            
+            // Save and update display
+            saveLeaderboard();
+            updateLeaderboardDisplay();
+            
+            // Hide name input
+            nameInputEl.style.display = 'none';
+            playerNameInput.value = '';
+            
+            // Show confirmation
+            showNotification(`🎊 Congratulations ${playerName}! You're now #${getPlayerRank()} on the leaderboard!`);
+        }
+        
+        // Get current player's rank
+        function getPlayerRank() {
+            const sortedLeaderboard = [...leaderboard].sort((a, b) => b.score - a.score);
+            const playerIndex = sortedLeaderboard.findIndex(entry => entry.id === currentPlayerId);
+            return playerIndex + 1;
+        }
+        
+        // Reset current session
+        function resetCurrentSession() {
+            sessionClicks = 0;
+            updateDisplay();
+            showNotification("Current session reset. Total score remains unchanged.");
+        }
+        
+        // End session and check for high score
+        function endSession() {
+            saveCurrentScore();
+            
+            if (checkLeaderboardQualification()) {
+                showNameInput();
+            } else {
+                showNotification(`Session ended with ${clickCount} total clicks. Keep going to make the leaderboard!`);
+            }
+        }
+        
+        // Check for pending high score on page load
+        function checkPendingHighScore() {
+            const pendingScore = localStorage.getItem('clickCounter_pendingScore');
+            const pendingTime = localStorage.getItem('clickCounter_pendingTime');
+            
+            if (pendingScore && pendingTime) {
+                const score = parseInt(pendingScore);
+                const time = new Date(pendingTime);
+                const now = new Date();
+                
+                // If the pending score is from a recent session (within last hour)
+                if (now - time < 3600000) {
+                    clickCount = score;
+                    updateDisplay();
+                    
+                    if (checkLeaderboardQualification()) {
+                        setTimeout(() => {
+                            showNotification(`Welcome back! Your previous score of ${score} qualifies for the leaderboard!`);
+                            setTimeout(showNameInput, 2000);
+                        }, 1000);
+                    }
+                }
+                
+                // Clear pending data
+                localStorage.removeItem('clickCounter_pendingScore');
+                localStorage.removeItem('clickCounter_pendingTime');
+            }
+        }
+        
+        // Initialize the game when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            initGame();
+            checkPendingHighScore();
+            
+            // Auto-save every 30 seconds
+            setInterval(saveCurrentScore, 30000);
+            
+            // Show welcome message
+            setTimeout(() => {
+                showNotification("🎮 Click the button to start counting! Your progress is saved automatically.");
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clickforge — Counter Sprint</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div>
+        <p class="eyebrow">Counter Sprint</p>
+        <h1>Clickforge</h1>
+        <p class="sub">Click as fast as you can. Your final score is saved when you refresh or leave.</p>
+      </div>
+      <div class="meta">
+        <span class="chip" id="lastRun">Last run: —</span>
+        <span class="chip" id="lastRank">Top 10 rank: —</span>
+      </div>
+    </header>
+
+    <section class="board">
+      <div class="counter">
+        <div class="count" id="count">0</div>
+        <div class="label">Clicks this run</div>
+      </div>
+      <button id="clickBtn" class="click-btn" aria-label="Click counter button">
+        Click
+      </button>
+      <div class="actions">
+        <button id="endRun" class="secondary">End Run</button>
+        <button id="reset" class="ghost">Reset Leaderboard</button>
+      </div>
+      <div class="hint">Tip: press <b>Space</b> or <b>Enter</b> to click faster.</div>
+    </section>
+
+    <section class="leaderboard">
+      <h2>World Top 10 (Offline)</h2>
+      <ol id="topList"></ol>
+      <p class="footnote">Stored locally in your browser for this device.</p>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

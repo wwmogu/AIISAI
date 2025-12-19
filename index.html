@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AIISAI - Project Index</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f4f1;
+        --ink: #1c1a16;
+        --accent: #0b5ed7;
+        --card: #ffffff;
+        --border: #ddd6cd;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Georgia", "Times New Roman", serif;
+        background: linear-gradient(180deg, #f6f4f1, #efe8de);
+        color: var(--ink);
+        position: relative;
+        overflow-x: hidden;
+      }
+      body::before,
+      body::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(0px);
+        opacity: 0.3;
+        z-index: 0;
+      }
+      body::before {
+        width: 280px;
+        height: 280px;
+        background: #f1d9b5;
+        top: -60px;
+        left: -60px;
+      }
+      body::after {
+        width: 220px;
+        height: 220px;
+        background: #cfe0f5;
+        bottom: 40px;
+        right: -40px;
+      }
+      header {
+        padding: 40px 20px 16px;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+      }
+      h1 {
+        margin: 0;
+        font-size: 36px;
+        letter-spacing: 0.5px;
+      }
+      p {
+        margin: 8px 0 0;
+        color: #4a433a;
+      }
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 20px;
+        position: relative;
+        z-index: 1;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+        animation: rise 520ms ease both;
+      }
+      .card:nth-child(2) { animation-delay: 120ms; }
+      .card h2 {
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      li + li { margin-top: 8px; }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+      }
+      a:hover { border-bottom-color: var(--accent); }
+      footer {
+        text-align: center;
+        padding: 24px 16px 40px;
+        color: #6a6258;
+        font-size: 14px;
+        position: relative;
+        z-index: 1;
+      }
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AIISAI Project Index</h1>
+      <p>Choose a model variant to launch a demo.</p>
+    </header>
+    <main>
+      <div class="grid">
+        <section class="card">
+          <h2>2D Car Game</h2>
+          <ul>
+            <li><a href="2D-Car-Game/GPT-5.2-Codex/index.html">GPT-5.2-Codex</a></li>
+            <li><a href="2D-Car-Game/GPT-5.2/car.html">GPT-5.2</a></li>
+            <li><a href="2D-Car-Game/Claude-Sonnet4.5/car.html">Claude-Sonnet4.5</a></li>
+            <li><a href="2D-Car-Game/Deepseek/car.html">Deepseek</a></li>
+            <li><a href="2D-Car-Game/Germini3-Fast/car.html">Germini3-Fast</a></li>
+            <li><a href="2D-Car-Game/Grok/car.html">Grok</a></li>
+          </ul>
+        </section>
+        <section class="card">
+          <h2>Counter Game</h2>
+          <ul>
+            <li><a href="Counter/GPT-5.2-Codex/index.html">GPT-5.2-Codex</a></li>
+            <li><a href="Counter/GPT-5.2/counter.html">GPT-5.2</a></li>
+            <li><a href="Counter/Claude-Sonnet4.5/counter.html">Claude-Sonnet4.5</a></li>
+            <li><a href="Counter/Deepseek/counter.html">Deepseek</a></li>
+            <li><a href="Counter/Germini3-Fast/counter.html">Germini3-Fast</a></li>
+            <li><a href="Counter/Grok/counter.html">Grok</a></li>
+          </ul>
+        </section>
+      </div>
+    </main>
+    <footer>
+      Open this file as `index.html` from the repository root.
+    </footer>
+  </body>
+</html>

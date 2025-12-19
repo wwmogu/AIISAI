@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Click Speed Challenge</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+    .game {
+      text-align: center;
+      background: #020617;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      width: 320px;
+    }
+    h1 { margin-bottom: 10px; }
+    button {
+      font-size: 22px;
+      padding: 16px 28px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: #38bdf8;
+      color: #020617;
+      margin-top: 20px;
+    }
+    button:active { transform: scale(0.96); }
+    .score { font-size: 28px; margin: 20px 0; }
+    .result { margin-top: 16px; font-size: 14px; color: #a5b4fc; }
+  </style>
+</head>
+<body>
+  <div class="game">
+    <h1>Click Speed Challenge</h1>
+    <p>Click as fast as you can. Refresh or close to finish.</p>
+    <div class="score">Score: <span id="count">0</span></div>
+    <button id="clickBtn">CLICK!</button>
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    const countEl = document.getElementById('count');
+    const resultEl = document.getElementById('result');
+    const btn = document.getElementById('clickBtn');
+
+    let count = Number(localStorage.getItem('currentScore')) || 0;
+    countEl.textContent = count;
+
+    // Simulated global top 10 (stored locally for demo purposes)
+    let top10 = JSON.parse(localStorage.getItem('top10')) || [50,45,40,35,30,25,20,15,10,5];
+
+    btn.addEventListener('click', () => {
+      count++;
+      countEl.textContent = count;
+      localStorage.setItem('currentScore', count);
+    });
+
+    function finalizeScore() {
+      localStorage.removeItem('currentScore');
+
+      const minTopScore = Math.min(...top10);
+      if (count > minTopScore) {
+        top10.push(count);
+        top10.sort((a,b) => b - a);
+        top10 = top10.slice(0, 10);
+        localStorage.setItem('top10', JSON.stringify(top10));
+        localStorage.setItem('lastResult', `\ud83c\udfc6 New World Top 10! Your score: ${count}`);
+      } else {
+        localStorage.setItem('lastResult', `Your score: ${count}. Not in Top 10 yet.`);
+      }
+    }
+
+    // Trigger when user leaves or refreshes
+    window.addEventListener('beforeunload', finalizeScore);
+
+    // Show last result if exists
+    const lastResult = localStorage.getItem('lastResult');
+    if (lastResult) {
+      resultEl.textContent = lastResult;
+    }
+  </script>
+</body>
+</html>

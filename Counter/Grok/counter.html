@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endless Click Counter Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #click-button {
+            font-size: 50px;
+            padding: 50px 100px;
+            margin: 20px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px #999;
+        }
+        #click-button:active {
+            box-shadow: 0 5px #666;
+            transform: translateY(4px);
+        }
+        #count {
+            font-size: 60px;
+            margin: 20px;
+            color: #333;
+        }
+        #leaderboard {
+            margin: 40px auto;
+            width: 50%;
+            border-collapse: collapse;
+        }
+        #leaderboard th, #leaderboard td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        #leaderboard th {
+            background-color: #f2f2f2;
+        }
+        #message {
+            font-size: 24px;
+            color: red;
+            margin: 20px;
+        }
+        #name-input {
+            font-size: 20px;
+            padding: 10px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Endless Click Counter</h1>
+    <p>Click the button as many times as you can! Your clicks persist across refreshes (on this device/browser).</p>
+    <p>When you leave or refresh, your session ends and the score is saved if it qualifies for the top 10.</p>
+    
+    <button id="click-button">CLICK ME!</button>
+    
+    <div id="count">Clicks: 0</div>
+    
+    <div id="message"></div>
+    
+    <h2>Local Top 10 Leaderboard (Your Device)</h2>
+    <table id="leaderboard">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Clicks</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        let count = 0;
+        const countDisplay = document.getElementById('count');
+        const messageDisplay = document.getElementById('message');
+        const leaderboardBody = document.querySelector('#leaderboard tbody');
+
+        // Load current session count from localStorage (if resuming)
+        if (localStorage.getItem('currentClicks')) {
+            count = parseInt(localStorage.getItem('currentClicks'));
+            updateCount();
+        }
+
+        document.getElementById('click-button').addEventListener('click', () => {
+            count++;
+            localStorage.setItem('currentClicks', count);
+            updateCount();
+        });
+
+        function updateCount() {
+            countDisplay.textContent = `Clicks: ${count}`;
+        }
+
+        function loadLeaderboard() {
+            let scores = JSON.parse(localStorage.getItem('topScores') || '[]');
+            // Sort descending
+            scores.sort((a, b) => b.clicks - a.clicks);
+            // Keep only top 10
+            scores = scores.slice(0, 10);
+
+            leaderboardBody.innerHTML = '';
+            scores.forEach((entry, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.clicks}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+
+            return scores;
+        }
+
+        function saveScoreIfQualified() {
+            if (count === 0) return;
+
+            let scores = loadLeaderboard(); // loads and sorts
+
+            // Check if current score qualifies (higher than lowest in top 10 or less than 10 entries)
+            const lowest = scores.length < 10 ? 0 : scores[scores.length - 1].clicks;
+
+            if (count > lowest) {
+                let name = prompt('Amazing! Your score qualifies for the top 10!\nEnter your name:');
+                if (!name) name = 'Anonymous';
+
+                scores.push({ name, clicks: count });
+                // Re-sort and slice
+                scores.sort((a, b) => b.clicks - a.clicks);
+                scores = scores.slice(0, 10);
+
+                localStorage.setItem('topScores', JSON.stringify(scores));
+                messageDisplay.textContent = `Congratulations, ${name}! Your score of ${count} is in the top 10!`;
+                loadLeaderboard();
+            } else {
+                messageDisplay.textContent = `Session ended with ${count} clicks. Good effort! (Did not make top 10)`;
+            }
+        }
+
+        // On page load, show leaderboard
+        loadLeaderboard();
+
+        // On page unload (refresh, close, exit), save if qualified
+        window.addEventListener('beforeunload', () => {
+            saveScoreIfQualified();
+            // Clear current session
+            localStorage.removeItem('currentClicks');
+        });
+
+        // Also handle visibility change (e.g., switching tabs/apps on mobile)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                saveScoreIfQualified();
+                localStorage.removeItem('currentClicks');
+            }
+        });
+    </script>
+</body>
+</html>
