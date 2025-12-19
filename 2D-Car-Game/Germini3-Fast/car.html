@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2D Canvas Car Game</title>
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #333; overflow: hidden; font-family: sans-serif;}
+        canvas { background: #555; border: 5px solid #222; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .instructions { position: absolute; top: 10px; color: white; text-align: center; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div class="instructions">Use <b>Arrow Keys</b> to Drive and Steer</div>
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = 800;
+    canvas.height = 600;
+
+    // Car Properties
+    const car = {
+        x: 400,
+        y: 300,
+        width: 30,
+        height: 50,
+        angle: 0,
+        speed: 0,
+        acceleration: 0.2,
+        friction: 0.05,
+        maxSpeed: 7,
+        rotationSpeed: 0.05
+    };
+
+    const keys = {};
+
+    window.addEventListener("keydown", (e) => keys[e.code] = true);
+    window.addEventListener("keyup", (e) => keys[e.code] = false);
+
+    function update() {
+        // Forward/Backward
+        if (keys["ArrowUp"]) car.speed += car.acceleration;
+        if (keys["ArrowDown"]) car.speed -= car.acceleration;
+
+        // Steering (Only steer if moving)
+        if (Math.abs(car.speed) > 0.1) {
+            const reverse = car.speed < 0 ? -1 : 1;
+            if (keys["ArrowLeft"]) car.angle -= car.rotationSpeed * reverse;
+            if (keys["ArrowRight"]) car.angle += car.rotationSpeed * reverse;
+        }
+
+        // Apply Friction
+        if (car.speed > 0) car.speed -= car.friction;
+        if (car.speed < 0) car.speed += car.friction;
+        if (Math.abs(car.speed) < car.friction) car.speed = 0;
+
+        // Speed Limit
+        if (car.speed > car.maxSpeed) car.speed = car.maxSpeed;
+        if (car.speed < -car.maxSpeed / 2) car.speed = -car.maxSpeed / 2;
+
+        // Physics: Convert angle and speed to X/Y coordinates
+        car.x += Math.sin(car.angle) * car.speed;
+        car.y -= Math.cos(car.angle) * car.speed;
+
+        // Screen Wrap (Optional)
+        if (car.x > canvas.width) car.x = 0;
+        if (car.x < 0) car.x = canvas.width;
+        if (car.y > canvas.height) car.y = 0;
+        if (car.y < 0) car.y = canvas.height;
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Car
+        ctx.save();
+        ctx.translate(car.x, car.y);
+        ctx.rotate(car.angle);
+        
+        // Car Body
+        ctx.fillStyle = "#e74c3c"; // Red car
+        ctx.fillRect(-car.width/2, -car.height/2, car.width, car.height);
+        
+        // Windshield (to show direction)
+        ctx.fillStyle = "#3498db";
+        ctx.fillRect(-car.width/2 + 5, -car.height/2 + 5, car.width - 10, 10);
+
+        ctx.restore();
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+    }
+
+    gameLoop();
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dustline Sprint — 2D Drive</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="game" aria-label="2D car driving game"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <div id="ui">
+    <section id="hud" class="panel">
+      <h1 class="title">Dustline Sprint</h1>
+      <div class="stat"><span>Speed</span><b id="speed">0</b></div>
+      <div class="stat"><span>Score</span><b id="score">0</b></div>
+      <div class="stat"><span>Time</span><b id="time">0.0s</b></div>
+      <div class="stat"><span>Health</span><b id="health">100%</b></div>
+      <div style="margin-top:10px; font-size:12px; color:#f1d9b9;">
+        Hold <b>Shift</b> for Nitro. Avoid rocks, collect beacons.
+      </div>
+    </section>
+
+    <section id="help" class="panel">
+      <div class="chip">Controls</div>
+      <div class="controls">
+        <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span>
+        <span class="key">↑</span><span class="key">←</span><span class="key">↓</span><span class="key">→</span>
+        <span class="key">Shift</span><span class="key">Space</span>
+      </div>
+      <div style="margin-top:10px; font-size:12px; color:#f1d9b9; line-height:1.5;">
+        Tap <b>Space</b> to handbrake and swing the tail. The dunes get rougher after each beacon.
+      </div>
+      <div class="btns">
+        <button id="restart">Restart</button>
+        <button id="toggleTrail">Toggle Trails</button>
+      </div>
+    </section>
+
+    <section id="status" class="panel">
+      <div class="chip">Nitro</div>
+      <div class="meter" style="margin-top:8px;"><span id="nitro"></span></div>
+      <div style="margin-top:12px; font-size:12px; color:#f1d9b9;">
+        Drift bonus: <b id="drift">0</b>
+      </div>
+    </section>
+
+    <section id="mobile" class="panel">
+      <div class="chip">Touch Controls</div>
+      <div class="touchpad">
+        <button data-key="ArrowUp">Up</button>
+        <button data-key="ArrowLeft">Left</button>
+        <button data-key="ArrowDown">Down</button>
+        <button data-key="ArrowRight">Right</button>
+        <button data-key="Shift">Nitro</button>
+        <button data-key="Space">Drift</button>
+      </div>
+    </section>
+
+    <section id="footer" class="panel">
+      <div style="font-size:12px; color:#f1d9b9; text-align:center;">
+        Stay in motion. Collect beacons to extend the desert run.
+      </div>
+    </section>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>

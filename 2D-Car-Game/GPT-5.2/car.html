@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2D Car Drive — Mini Web Game</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1730;
+      --text:#e9eefc;
+      --muted:#9fb0da;
+      --accent:#7aa2ff;
+      --danger:#ff6b6b;
+      --ok:#5ce1a6;
+    }
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background:radial-gradient(1200px 800px at 30% 20%, #18224a 0%, var(--bg) 60%);
+      color:var(--text);
+      font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      overflow:hidden;
+    }
+    #ui{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      display:grid;
+      grid-template-columns: 360px 1fr 320px;
+      grid-template-rows: auto 1fr auto;
+      gap:12px;
+      padding:12px;
+      box-sizing:border-box;
+    }
+    .card{
+      pointer-events:auto;
+      background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border:1px solid rgba(255,255,255,0.10);
+      border-radius:16px;
+      box-shadow:0 12px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .card .inner{padding:12px 14px;}
+    #hud{grid-column:1; grid-row:1; align-self:start;}
+    #help{grid-column:1; grid-row:2; align-self:start;}
+    #settings{grid-column:3; grid-row:1; align-self:start;}
+    #toast{grid-column:2; grid-row:3; justify-self:center; align-self:end; max-width:880px; width:min(880px, 100%);}    
+
+    h1{font-size:14px; margin:0 0 8px 0; letter-spacing:0.2px;}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+    .kpis{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px;}
+    .kpi{padding:10px 12px; border-radius:14px; background:rgba(0,0,0,0.18); border:1px solid rgba(255,255,255,0.09);}    
+    .kpi .label{font-size:12px; color:var(--muted);}    
+    .kpi .value{font-size:18px; font-weight:700; margin-top:3px;}
+
+    .hint{color:var(--muted); font-size:12px; line-height:1.4;}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.18);
+      border:1px solid rgba(255,255,255,0.10);
+      font-size:12px;
+      color:var(--muted);
+    }
+    .keys{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+    .key{display:inline-flex; align-items:center; justify-content:center; min-width:28px; height:28px; padding:0 8px; border-radius:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.11); color:var(--text); font-size:12px; font-weight:600;}
+
+    label{font-size:12px; color:var(--muted);}
+    input[type="range"]{width:160px;}
+    .btns{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+    button{
+      pointer-events:auto;
+      border:1px solid rgba(255,255,255,0.14);
+      background:rgba(255,255,255,0.06);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:12px;
+    }
+    button:hover{background:rgba(255,255,255,0.10);}
+    button:active{transform:translateY(1px);}
+
+    .toast-inner{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px;}
+    .toast-msg{font-size:12px; color:var(--muted);}
+
+    canvas{display:block; width:100vw; height:100vh;}
+
+    @media (max-width: 980px){
+      #ui{grid-template-columns: 1fr; grid-template-rows: auto auto 1fr auto;}
+      #hud{grid-column:1; grid-row:1;}
+      #settings{grid-column:1; grid-row:2;}
+      #help{grid-column:1; grid-row:3;}
+      #toast{grid-column:1; grid-row:4;}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c" aria-label="2D car driving game"></canvas>
+
+  <div id="ui">
+    <div id="hud" class="card"><div class="inner">
+      <div class="row">
+        <h1>HUD</h1>
+        <span class="pill" id="modePill">Mode: <b>Drive</b></span>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Speed</div><div class="value" id="speed">0</div></div>
+        <div class="kpi"><div class="label">Lap / Checkpoints</div><div class="value" id="lap">1 / 0</div></div>
+        <div class="kpi"><div class="label">Time</div><div class="value" id="time">0.0s</div></div>
+        <div class="kpi"><div class="label">Best Lap</div><div class="value" id="best">—</div></div>
+      </div>
+      <div class="btns">
+        <button id="btnRestart">Restart</button>
+        <button id="btnToggleMode">Toggle: Drive / Drift</button>
+        <button id="btnPause">Pause</button>
+      </div>
+      <div class="hint" style="margin-top:8px;">Drive through <b>green checkpoints</b> to complete a lap. Avoid walls.</div>
+    </div></div>
+
+    <div id="help" class="card"><div class="inner">
+      <h1>Controls</h1>
+      <div class="keys">
+        <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span>
+        <span class="key">↑</span><span class="key">←</span><span class="key">↓</span><span class="key">→</span>
+        <span class="key">Space</span><span class="key">R</span><span class="key">P</span>
+      </div>
+      <div class="hint" style="margin-top:10px;">
+        <b>Accelerate:</b> W / ↑ &nbsp;&nbsp; <b>Brake/Reverse:</b> S / ↓<br/>
+        <b>Steer:</b> A/D or ←/→ (steer strength scales with speed)<br/>
+        <b>Handbrake (drift):</b> Space (more effective in Drift mode)<br/>
+        <b>Restart:</b> R &nbsp;&nbsp; <b>Pause:</b> P
+      </div>
+      <div class="hint" style="margin-top:10px;">
+        Tip: In <b>Drift</b> mode, grip is reduced and the handbrake is stronger. Try flicking into corners.
+      </div>
+    </div></div>
+
+    <div id="settings" class="card"><div class="inner">
+      <h1>Settings</h1>
+      <div class="row" style="margin-bottom:10px;">
+        <label for="sens">Steering Sens</label>
+        <input id="sens" type="range" min="0.5" max="2.0" step="0.05" value="1.0" />
+      </div>
+      <div class="row" style="margin-bottom:10px;">
+        <label for="cam">Camera Smooth</label>
+        <input id="cam" type="range" min="0" max="0.25" step="0.01" value="0.10" />
+      </div>
+      <div class="row" style="margin-bottom:10px;">
+        <label for="fx">Trail FX</label>
+        <input id="fx" type="range" min="0" max="1" step="0.05" value="0.55" />
+      </div>
+      <div class="hint">All physics are deterministic and run at a fixed timestep for consistent gameplay.</div>
+    </div></div>
+
+    <div id="toast" class="card"><div class="toast-inner">
+      <div class="toast-msg" id="toastMsg">Click the canvas to capture pointer for better driving (optional). Works on keyboard too.</div>
+      <div class="btns" style="margin:0;">
+        <button id="btnFocus">Focus</button>
+      </div>
+    </div></div>
+  </div>
+
+  <script>
+  (() => {
+    // ===== Canvas setup =====
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    function resize(){
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ===== Small math helpers =====
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const lerp = (a,b,t) => a + (b-a)*t;
+
+    function vec(x=0,y=0){return {x,y};}
+    function len(v){return Math.hypot(v.x,v.y);}
+    function norm(v){
+      const l = len(v) || 1;
+      return {x:v.x/l, y:v.y/l};
+    }
+
+    function rotate(v, ang){
+      const c = Math.cos(ang), s = Math.sin(ang);
+      return {x: v.x*c - v.y*s, y: v.x*s + v.y*c};
+    }
+
+    // ===== Input =====
+    const keys = new Set();
+    window.addEventListener('keydown', (e) => {
+      if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD','KeyR','KeyP'].includes(e.code)) e.preventDefault();
+      keys.add(e.code);
+      if(e.code === 'KeyR') restart();
+      if(e.code === 'KeyP') togglePause();
+    }, {passive:false});
+    window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+    // Optional pointer steering (mouse moves) — toggled by focus
+    let pointerActive = false;
+    let pointer = {x:0, y:0};
+    canvas.addEventListener('pointermove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = e.clientX - rect.left;
+      pointer.y = e.clientY - rect.top;
+    });
+
+    // ===== UI =====
+    const elSpeed = document.getElementById('speed');
+    const elLap = document.getElementById('lap');
+    const elTime = document.getElementById('time');
+    const elBest = document.getElementById('best');
+    const elModePill = document.getElementById('modePill');
+    const elToastMsg = document.getElementById('toastMsg');
+
+    const sensSlider = document.getElementById('sens');
+    const camSlider = document.getElementById('cam');
+    const fxSlider = document.getElementById('fx');
+
+    document.getElementById('btnRestart').addEventListener('click', () => restart());
+    document.getElementById('btnToggleMode').addEventListener('click', () => toggleMode());
+    document.getElementById('btnPause').addEventListener('click', () => togglePause());
+    document.getElementById('btnFocus').addEventListener('click', () => {
+      pointerActive = !pointerActive;
+      elToastMsg.textContent = pointerActive ? 'Pointer steering enabled. Use mouse to aim where to go (keyboard still works).' : 'Pointer steering disabled. Drive with keyboard.';
+    });
+
+    // ===== World (track) =====
+    // We create a simple closed track using line segments for walls.
+    // The car is a rectangle; collisions use a coarse SAT-like pushout against segments.
+
+    const world = {
+      walls: [],
+      checkpoints: [],
+      bounds: {minX:-2200, minY:-1600, maxX:2200, maxY:1600},
+    };
+
+    function addWall(ax, ay, bx, by){
+      world.walls.push({a:vec(ax,ay), b:vec(bx,by)});
+    }
+
+    // Build a "stadium" track with some chicanes
+    function buildTrack(){
+      world.walls.length = 0;
+      world.checkpoints.length = 0;
+
+      // Outer loop (rough rounded rectangle)
+      const O = [
+        vec(-1500,-900), vec(1500,-900), vec(1900,-400), vec(1900,400), vec(1500,900), vec(-1500,900), vec(-1900,400), vec(-1900,-400)
+      ];
+      // Inner loop
+      const I = [
+        vec(-1100,-600), vec(1100,-600), vec(1400,-250), vec(1400,250), vec(1100,600), vec(-1100,600), vec(-1400,250), vec(-1400,-250)
+      ];
+
+      // Add segments
+      for(let i=0;i<O.length;i++) addWall(O[i].x,O[i].y,O[(i+1)%O.length].x,O[(i+1)%O.length].y);
+      for(let i=0;i<I.length;i++) addWall(I[(i+1)%I.length].x,I[(i+1)%I.length].y,I[i].x,I[i].y); // reverse so normals point inward-ish
+
+      // Add a couple of internal obstacles/chicanes
+      addWall(-300,-600, 300,-600);
+      addWall(-300,-600, -300,-250);
+      addWall(300,-600, 300,-250);
+
+      addWall(-650, 200, -200, 200);
+      addWall(200, 200, 650, 200);
+
+      addWall(0, 600, 0, 250);
+
+      // Checkpoints (line segments you must cross in order)
+      world.checkpoints.push({a:vec(-1500,-100), b:vec(-1100,-100)}); // start/finish
+      world.checkpoints.push({a:vec(-200,-820), b:vec(200,-820)});
+      world.checkpoints.push({a:vec(1700,-100), b:vec(1400,-100)});
+      world.checkpoints.push({a:vec(200, 820), b:vec(-200, 820)});
+      world.checkpoints.push({a:vec(-1700, 100), b:vec(-1400, 100)});
+    }
+    buildTrack();
+
+    // ===== Car physics =====
+    const car = {
+      pos: vec(-1300,-200),
+      vel: vec(0,0),
+      ang: 0,             // heading radians
+      angVel: 0,
+      w: 42,
+      h: 22,
+      color: '#7aa2ff',
+    };
+
+    const state = {
+      paused: false,
+      mode: 'Drive', // or Drift
+      t: 0,
+      lap: 1,
+      checkpointIndex: 0,
+      lapStartTime: 0,
+      bestLap: null,
+      lastCrossAt: -999,
+      shake: 0,
+      trail: [],
+    };
+
+    function restart(){
+      car.pos = vec(-1300,-200);
+      car.vel = vec(0,0);
+      car.ang = 0;
+      car.angVel = 0;
+      state.t = 0;
+      state.lap = 1;
+      state.checkpointIndex = 0;
+      state.lapStartTime = 0;
+      state.lastCrossAt = -999;
+      state.shake = 0;
+      state.trail.length = 0;
+      toast('Restarted.');
+    }
+
+    function toggleMode(){
+      state.mode = (state.mode === 'Drive') ? 'Drift' : 'Drive';
+      elModePill.innerHTML = `Mode: <b>${state.mode}</b>`;
+      toast(state.mode === 'Drift' ? 'Drift mode: lower grip + stronger handbrake.' : 'Drive mode: higher grip + stable steering.');
+    }
+
+    function togglePause(){
+      state.paused = !state.paused;
+      toast(state.paused ? 'Paused' : 'Resumed');
+    }
+
+    function toast(msg){
+      elToastMsg.textContent = msg;
+    }
+
+    // Closest point on segment AB to point P
+    function closestPointOnSegment(a,b,p){
+      const ab = {x:b.x-a.x, y:b.y-a.y};
+      const ap = {x:p.x-a.x, y:p.y-a.y};
+      const ab2 = ab.x*ab.x + ab.y*ab.y;
+      const t = ab2 ? clamp((ap.x*ab.x + ap.y*ab.y)/ab2, 0, 1) : 0;
+      return {x:a.x + ab.x*t, y:a.y + ab.y*t, t};
+    }
+
+    function segmentNormal(a,b){
+      const dx = b.x-a.x, dy = b.y-a.y;
+      const n = norm({x:-dy, y:dx});
+      return n;
+    }
+
+    // Car corners in world space
+    function carCorners(){
+      const hw = car.w/2, hh = car.h/2;
+      const local = [vec(-hw,-hh), vec(hw,-hh), vec(hw,hh), vec(-hw,hh)];
+      return local.map(p => {
+        const r = rotate(p, car.ang);
+        return {x: car.pos.x + r.x, y: car.pos.y + r.y};
+      });
+    }
+
+    // Simple collision: push car out if any corner penetrates a wall segment within radius
+    function resolveCollisions(){
+      const corners = carCorners();
+      const radius = 6; // padding
+      let hit = false;
+
+      for(const w of world.walls){
+        const n = segmentNormal(w.a, w.b);
+        for(const c of corners){
+          const cp = closestPointOnSegment(w.a, w.b, c);
+          const dx = c.x - cp.x;
+          const dy = c.y - cp.y;
+          const d = Math.hypot(dx,dy);
+          if(d < radius){
+            hit = true;
+            const push = (radius - d);
+            const dir = d > 1e-6 ? {x:dx/d, y:dy/d} : n;
+            car.pos.x += dir.x * push;
+            car.pos.y += dir.y * push;
+
+            // Dampen velocity along collision normal (bounce a bit)
+            const vn = car.vel.x*dir.x + car.vel.y*dir.y;
+            if(vn < 0){
+              car.vel.x -= (1.35*vn)*dir.x;
+              car.vel.y -= (1.35*vn)*dir.y;
+            }
+            // Add a little shake
+            state.shake = Math.min(12, state.shake + 3);
+          }
+        }
+      }
+
+      if(hit){
+        // friction on impact
+        car.vel.x *= 0.985;
+        car.vel.y *= 0.985;
+        car.angVel *= 0.92;
+      }
+    }
+
+    // Checkpoint crossing: detect when car crosses the checkpoint segment line
+    function segIntersect(a,b,c,d){
+      // segment AB intersects CD?
+      function orient(p,q,r){
+        return (q.x-p.x)*(r.y-p.y) - (q.y-p.y)*(r.x-p.x);
+      }
+      function onSeg(p,q,r){
+        return Math.min(p.x,r.x) <= q.x && q.x <= Math.max(p.x,r.x) &&
+               Math.min(p.y,r.y) <= q.y && q.y <= Math.max(p.y,r.y);
+      }
+      const o1 = orient(a,b,c);
+      const o2 = orient(a,b,d);
+      const o3 = orient(c,d,a);
+      const o4 = orient(c,d,b);
+      if(o1===0 && onSeg(a,c,b)) return true;
+      if(o2===0 && onSeg(a,d,b)) return true;
+      if(o3===0 && onSeg(c,a,d)) return true;
+      if(o4===0 && onSeg(c,b,d)) return true;
+      return (o1>0) !== (o2>0) && (o3>0) !== (o4>0);
+    }
+
+    let prevPos = {...car.pos};
+    function updateCheckpoint(){
+      const idx = state.checkpointIndex;
+      const cp = world.checkpoints[idx];
+      if(!cp) return;
+      const a = prevPos;
+      const b = car.pos;
+      if(segIntersect(a,b,cp.a,cp.b) && (state.t - state.lastCrossAt) > 0.4){
+        state.lastCrossAt = state.t;
+        state.checkpointIndex++;
+        toast(`Checkpoint ${Math.min(state.checkpointIndex, world.checkpoints.length)} / ${world.checkpoints.length}`);
+
+        if(state.checkpointIndex >= world.checkpoints.length){
+          // completed lap
+          const lapTime = state.t - state.lapStartTime;
+          if(state.bestLap === null || lapTime < state.bestLap) state.bestLap = lapTime;
+          state.lap++;
+          state.checkpointIndex = 0;
+          state.lapStartTime = state.t;
+          toast(`Lap ${state.lap-1} complete: ${lapTime.toFixed(2)}s`);
+        }
+      }
+    }
+
+    // ===== Fixed timestep simulation =====
+    const FIXED_DT = 1/120;
+    let acc = 0;
+    let last = performance.now()/1000;
+
+    // Camera
+    const cam = {x:car.pos.x, y:car.pos.y};
+
+    function simulate(dt){
+      prevPos = {...car.pos};
+
+      // Inputs
+      const up = keys.has('KeyW') || keys.has('ArrowUp');
+      const down = keys.has('KeyS') || keys.has('ArrowDown');
+      const left = keys.has('KeyA') || keys.has('ArrowLeft');
+      const right = keys.has('KeyD') || keys.has('ArrowRight');
+      const handbrake = keys.has('Space');
+
+      // Pointer steering: aim direction toward pointer in screen-space
+      let pointerSteer = 0;
+      if(pointerActive){
+        const sx = canvas.clientWidth/2;
+        const sy = canvas.clientHeight/2;
+        const dx = pointer.x - sx;
+        const dy = pointer.y - sy;
+        const targetAng = Math.atan2(dy, dx);
+        // Convert to relative angle error
+        let err = targetAng - car.ang;
+        while(err > Math.PI) err -= Math.PI*2;
+        while(err < -Math.PI) err += Math.PI*2;
+        pointerSteer = clamp(err / 1.2, -1, 1);
+      }
+
+      const steeringSens = parseFloat(sensSlider.value);
+
+      // Tunables
+      const modeDrive = state.mode === 'Drive';
+      const engine = modeDrive ? 980 : 920;           // acceleration force
+      const brake = 1200;
+      const maxSpeed = modeDrive ? 560 : 590;
+      const grip = modeDrive ? 7.0 : 4.8;             // lateral grip
+      const roll = modeDrive ? 0.996 : 0.994;         // general damping
+      const hbStrength = modeDrive ? 0.72 : 0.55;     // lower -> more drift
+
+      // Forward vector
+      const fwd = {x: Math.cos(car.ang), y: Math.sin(car.ang)};
+      const rightv = {x: -fwd.y, y: fwd.x};
+
+      // Throttle / brake
+      const speedFwd = car.vel.x*fwd.x + car.vel.y*fwd.y;
+      let force = 0;
+      if(up) force += engine;
+      if(down) force -= (speedFwd > 0 ? brake : engine*0.70);
+
+      // Apply force along forward direction
+      car.vel.x += fwd.x * force * dt;
+      car.vel.y += fwd.y * force * dt;
+
+      // Clamp speed
+      const speed = len(car.vel);
+      if(speed > maxSpeed){
+        car.vel.x *= (maxSpeed/speed);
+        car.vel.y *= (maxSpeed/speed);
+      }
+
+      // Steering scales with speed (less steering at low speed)
+      const steerInput = (left? -1:0) + (right? 1:0);
+      const steer = (pointerActive ? pointerSteer : steerInput);
+      const steerScale = clamp(Math.abs(speedFwd)/360, 0.15, 1);
+      const steerRate = (modeDrive ? 2.75 : 3.2) * steeringSens * steerScale;
+      car.angVel += steer * steerRate * dt;
+
+      // Handbrake: reduce lateral grip and add angular impulse
+      const hb = handbrake ? (modeDrive ? 1.0 : 1.35) : 0.0;
+
+      // Lateral friction: reduce sideways velocity relative to car orientation
+      const vLat = car.vel.x*rightv.x + car.vel.y*rightv.y;
+      const vLatTarget = vLat * (handbrake ? hbStrength : 0.08);
+      const dvLat = (vLat - vLatTarget);
+      car.vel.x -= rightv.x * dvLat * clamp(grip*dt*(1 - 0.35*hb), 0, 1);
+      car.vel.y -= rightv.y * dvLat * clamp(grip*dt*(1 - 0.35*hb), 0, 1);
+
+      // Angular damping
+      car.angVel *= (modeDrive ? 0.985 : 0.982);
+      car.ang += car.angVel;
+
+      // Overall damping / rolling resistance
+      car.vel.x *= roll;
+      car.vel.y *= roll;
+
+      // Integrate
+      car.pos.x += car.vel.x * dt;
+      car.pos.y += car.vel.y * dt;
+
+      // Keep in bounds
+      car.pos.x = clamp(car.pos.x, world.bounds.minX, world.bounds.maxX);
+      car.pos.y = clamp(car.pos.y, world.bounds.minY, world.bounds.maxY);
+
+      // Collisions
+      resolveCollisions();
+
+      // Checkpoints
+      updateCheckpoint();
+
+      // Trail
+      const fx = parseFloat(fxSlider.value);
+      if(fx > 0.01 && speed > 40){
+        state.trail.push({x: car.pos.x, y: car.pos.y, a: 1.0});
+        if(state.trail.length > 240) state.trail.splice(0, state.trail.length - 240);
+      }
+      for(const p of state.trail) p.a -= 0.010 * (1 + (1-fx)*1.8);
+      state.trail = state.trail.filter(p => p.a > 0);
+
+      // Time
+      state.t += dt;
+    }
+
+    // ===== Rendering =====
+    function draw(){
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+
+      // camera smoothing
+      const camSmooth = parseFloat(camSlider.value);
+      cam.x = lerp(cam.x, car.pos.x, 1 - Math.exp(- (camSmooth*60) * FIXED_DT));
+      cam.y = lerp(cam.y, car.pos.y, 1 - Math.exp(- (camSmooth*60) * FIXED_DT));
+
+      // screen transform
+      const shake = state.shake;
+      state.shake = Math.max(0, state.shake - 0.8);
+      const sx = (Math.random()-0.5) * shake;
+      const sy = (Math.random()-0.5) * shake;
+
+      ctx.clearRect(0,0,w,h);
+
+      // Background grid
+      ctx.save();
+      ctx.translate(w/2 + sx, h/2 + sy);
+      ctx.scale(1,1);
+      ctx.translate(-cam.x, -cam.y);
+
+      // Distant parallax stars
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.translate(cam.x*0.06, cam.y*0.06);
+      for(let i=0;i<120;i++){
+        const px = (i*173)%5000 - 2500;
+        const py = (i*719)%3600 - 1800;
+        const r = (i%3)+1;
+        ctx.beginPath();
+        ctx.arc(px, py, r*0.35, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Track floor
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.fillRect(world.bounds.minX, world.bounds.minY, world.bounds.maxX-world.bounds.minX, world.bounds.maxY-world.bounds.minY);
+
+      // Grid
+      ctx.globalAlpha = 0.30;
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      const grid = 120;
+      const minX = Math.floor((cam.x - w)/grid)*grid - 1000;
+      const maxX = Math.floor((cam.x + w)/grid)*grid + 1000;
+      const minY = Math.floor((cam.y - h)/grid)*grid - 1000;
+      const maxY = Math.floor((cam.y + h)/grid)*grid + 1000;
+      for(let x=minX; x<=maxX; x+=grid){
+        ctx.beginPath(); ctx.moveTo(x, minY); ctx.lineTo(x, maxY); ctx.stroke();
+      }
+      for(let y=minY; y<=maxY; y+=grid){
+        ctx.beginPath(); ctx.moveTo(minX, y); ctx.lineTo(maxX, y); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // Trail
+      if(state.trail.length){
+        ctx.lineWidth = 10;
+        ctx.lineCap = 'round';
+        for(let i=1;i<state.trail.length;i++){
+          const p0 = state.trail[i-1];
+          const p1 = state.trail[i];
+          const a = Math.min(p0.a, p1.a);
+          ctx.strokeStyle = `rgba(122, 162, 255, ${0.22*a})`;
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.stroke();
+        }
+      }
+
+      // Walls
+      ctx.lineWidth = 10;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      for(const wall of world.walls){
+        ctx.beginPath();
+        ctx.moveTo(wall.a.x, wall.a.y);
+        ctx.lineTo(wall.b.x, wall.b.y);
+        ctx.stroke();
+      }
+      // Inner highlight
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(122, 162, 255, 0.22)';
+      for(const wall of world.walls){
+        ctx.beginPath();
+        ctx.moveTo(wall.a.x, wall.a.y);
+        ctx.lineTo(wall.b.x, wall.b.y);
+        ctx.stroke();
+      }
+
+      // Checkpoints
+      for(let i=0;i<world.checkpoints.length;i++){
+        const cp = world.checkpoints[i];
+        const active = (i === state.checkpointIndex);
+        ctx.lineWidth = active ? 8 : 5;
+        ctx.strokeStyle = active ? 'rgba(92, 225, 166, 0.85)' : 'rgba(92, 225, 166, 0.18)';
+        ctx.beginPath();
+        ctx.moveTo(cp.a.x, cp.a.y);
+        ctx.lineTo(cp.b.x, cp.b.y);
+        ctx.stroke();
+      }
+
+      // Car shadow
+      ctx.save();
+      ctx.translate(car.pos.x, car.pos.y);
+      ctx.rotate(car.ang);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.beginPath();
+      ctx.roundRect(-car.w/2 + 2, -car.h/2 + 4, car.w, car.h, 6);
+      ctx.fill();
+      ctx.restore();
+
+      // Car body
+      ctx.save();
+      ctx.translate(car.pos.x, car.pos.y);
+      ctx.rotate(car.ang);
+
+      // Body
+      ctx.fillStyle = 'rgba(122,162,255,0.95)';
+      ctx.beginPath();
+      ctx.roundRect(-car.w/2, -car.h/2, car.w, car.h, 7);
+      ctx.fill();
+
+      // Cabin
+      ctx.fillStyle = 'rgba(10,16,32,0.65)';
+      ctx.beginPath();
+      ctx.roundRect(-car.w*0.12, -car.h*0.34, car.w*0.34, car.h*0.68, 6);
+      ctx.fill();
+
+      // Front marker
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.beginPath();
+      ctx.roundRect(car.w*0.18, -car.h*0.22, car.w*0.18, car.h*0.44, 5);
+      ctx.fill();
+
+      // Wheels (simple)
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      const wx = car.w*0.30;
+      const wy = car.h*0.52;
+      const ww = 8, wh = 6;
+      ctx.beginPath(); ctx.roundRect(-wx-ww/2, -wy-wh/2, ww, wh, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(-wx-ww/2, wy-wh/2, ww, wh, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(wx-ww/2, -wy-wh/2, ww, wh, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(wx-ww/2, wy-wh/2, ww, wh, 2); ctx.fill();
+
+      ctx.restore();
+
+      // Minimap-ish direction arrow (in-world indicator near car)
+      ctx.save();
+      ctx.translate(car.pos.x, car.pos.y);
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      ctx.beginPath();
+      ctx.arc(0,0, 58, 0, Math.PI*2);
+      ctx.fill();
+      ctx.rotate(car.ang);
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.lineTo(48,0);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.restore();
+
+      // Screen overlay vignette
+      ctx.save();
+      const g = ctx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.35, w/2, h/2, Math.max(w,h)*0.75);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,0.35)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,w,h);
+      ctx.restore();
+
+      // HUD text
+      const speed = len(car.vel);
+      elSpeed.textContent = `${Math.round(speed)} u/s`;
+      elLap.textContent = `${state.lap} / ${state.checkpointIndex}`;
+      elTime.textContent = `${state.t.toFixed(1)}s`;
+      elBest.textContent = state.bestLap === null ? '—' : `${state.bestLap.toFixed(2)}s`;
+    }
+
+    // ===== Game loop =====
+    function frame(){
+      const now = performance.now()/1000;
+      let dt = now - last;
+      last = now;
+      dt = Math.min(dt, 0.05);
+
+      if(!state.paused){
+        acc += dt;
+        // Avoid spiral of death
+        const maxSteps = 240;
+        let steps = 0;
+        while(acc >= FIXED_DT && steps < maxSteps){
+          simulate(FIXED_DT);
+          acc -= FIXED_DT;
+          steps++;
+        }
+      }
+
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    // Helpers for roundRect support
+    if(!CanvasRenderingContext2D.prototype.roundRect){
+      CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+        const rr = typeof r === 'number' ? {tl:r,tr:r,br:r,bl:r} : {tl:r.tl||0,tr:r.tr||0,br:r.br||0,bl:r.bl||0};
+        this.beginPath();
+        this.moveTo(x+rr.tl, y);
+        this.lineTo(x+w-rr.tr, y);
+        this.quadraticCurveTo(x+w, y, x+w, y+rr.tr);
+        this.lineTo(x+w, y+h-rr.br);
+        this.quadraticCurveTo(x+w, y+h, x+w-rr.br, y+h);
+        this.lineTo(x+rr.bl, y+h);
+        this.quadraticCurveTo(x, y+h, x, y+h-rr.bl);
+        this.lineTo(x, y+rr.tl);
+        this.quadraticCurveTo(x, y, x+rr.tl, y);
+        this.closePath();
+        return this;
+      };
+    }
+
+    // Start
+    elModePill.innerHTML = `Mode: <b>${state.mode}</b>`;
+    toast('WASD / Arrows to drive. Space for handbrake. Press R to restart.');
+    requestAnimationFrame(frame);
+  })();
+  </script>
+</body>
+</html>
